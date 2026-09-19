@@ -9,6 +9,61 @@ we can still access all data by connecting through a Firefox-specific debugger.
 
 Repository: https://github.com/Rob--W/firefox-android-backup-restore
 
+This fork ([mariotornado/firefox-android-backup-restore](https://github.com/mariotornado/firefox-android-backup-restore))
+adds a Windows GUI that automates the whole process below - see
+[Windows GUI](#windows-gui-automated-no-manual-console-needed).
+
+## Windows GUI (automated, no manual console needed)
+
+This fork adds a Windows GUI application, `FirefoxTransferGui.exe`, that
+fully automates the manual steps described in the rest of this README.
+Instead of pasting [`snippets_for_firefox_debugging.js`](snippets_for_firefox_debugging.js)
+into a Browser Toolbox console by hand, it speaks Firefox's DevTools
+Remote Debugging Protocol directly over an adb-forwarded socket
+(`localabstract:org.mozilla.firefox/firefox-debugger-socket`) to run the
+same backup/restore logic in Firefox's Main Process - no `about:debugging`,
+no copy-pasting, no manual `nc`/`adb push` steps.
+
+Just run `FirefoxTransferGui.exe`:
+
+- Pick your device from the auto-detected list.
+- Click **Backup from device -> file** or **Restore from file -> device**.
+- Watch progress in the live log pane.
+
+### First-time setup wizard
+
+If no device is ready yet, the app opens a **Setup Help** wizard that
+walks through what's missing step by step, with live re-checks every
+2 seconds:
+
+1. Enabling Developer options and USB debugging on the phone.
+2. Authorizing this computer's USB debugging request.
+3. Installing Firefox, if it isn't already.
+4. Enabling Firefox's own "Remote debugging via USB" toggle.
+
+It detects which of these is still missing and shows only the relevant
+instructions, turning green once the device is ready to use.
+
+### Building it yourself
+
+The GUI is plain PowerShell (`FirefoxTransferGui.ps1`, using
+`FirefoxRdp.psm1` as the protocol client and `fab_rdp_payload.js` for the
+on-device logic), compiled to a standalone `.exe` with
+[ps2exe](https://github.com/MScholtes/PS2EXE):
+
+```powershell
+Install-Module ps2exe -Scope CurrentUser
+Invoke-ps2exe -inputFile FirefoxTransferGui.ps1 -outputFile FirefoxTransferGui.exe -noConsole -STA
+```
+
+`Invoke-FirefoxBackup.ps1` / `Invoke-FirefoxRestore.ps1` provide the same
+automation as plain command-line scripts, if you'd rather not use the GUI.
+
+---
+
+*The GUI, DevTools protocol automation, and setup wizard in this fork were
+built with [Claude Code](https://claude.com/claude-code).*
+
 ## Requirements
 
 All you need is `adb`, and a desktop Firefox instance to use `about:debugging`:
